@@ -1,0 +1,166 @@
+---
+title: "Homework 1"
+author: "Mert Nardal"
+date: "12 04 2022"
+output: html_document
+---
+
+# Visualisation and Analysis of 3 Different Time Series Data and related Google Trends
+
+```{r echo=FALSE, include=TRUE, warning=FALSE}
+#Necessary libraries, please install them beforehand if they are not already installed.
+
+library(readxl)
+library(ggplot2)
+# necessary data manipulations
+
+xdata<-read_xlsx("C:\\Users\\Lenovo\\Desktop\\IE360\\data360.xlsx",sheet="EVDS") #data of usd/try, general cpi index, interest rate and the google trend data of "dolar","enflasyon","faiz" for years 2010-2021 in monthly manner 
+
+# days in the data is a dummy variable, it is added to be able to R can transform this Year,Month columns into date format.
+chardates<-paste(xdata$Year,xdata$Month,xdata$Day,sep="-") #turning numeric year,month,day data into char to convert them date format
+dates<-as.Date(chardates) #converting the char data to date format
+
+qdata = data.frame(date=dates,year=xdata$Year,usd=xdata$USDTRY,cpi=xdata$CPI,interestRate=xdata$InterestRate,usdTrend=xdata$trendUSD,cpiTrend=xdata$trendCPI,intrateTrend=xdata$trendInterest)
+# qdata data frame is used for plotting
+
+
+```
+
+
+## Introduction
+
+In this report, three different time series data and three different google trends data for specific keywords that is considered as related with the three different time series data, is obtained. All the six data sets are time series between 2010 January and 2022 January in monthly basis. Then the correlation between these 3 time series and their related google trends data is examined separately. After that, correlations between USD/TRY Exchange Rate-Interest Rate and USD/TRY Exchange Rate-CPI index are examined. The data sets in this report are:
+
+1)	US Dollar/Turkish Lira Exchange Rate
+2)	Interest Rate for Turkish Lira Accounts
+3)	General CPI Index
+4)	Google Trends of “dolar”
+5)	Google Trends of “enflasyon”
+6)	Google Trends of “faiz”
+
+## 1) USD/TRY Exchange Rate and Google Trends for keyword “dolar”
+
+### USD/TRY Exchange Rate Over Time
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=usd))+ geom_line(color="blue") + geom_smooth(fill = NA, color="red",linetype = "twodash", size = 0.5) + 
+labs(title = "USD/TRY vs Time", x = "Time", y = "Exchange Rate" ) +
+scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) + 
+scale_y_continuous(breaks = seq(from = 0,to = 15,by = 1), minor_breaks = seq(from = 0,to = 15,by = .2))
+```
+
+
+It can be said that exchange rate has an increasing trend over time. Although there are fluctuations from 2018 May to mid 2021 the increasing trend still remains. The reason for fluctuations in 2018 are elections in Turkey then dolar increases until 2019 again then fluctuations begin at 2020 again which caused by covid period and its effects on economy. The google trend keyword is “dolar” for USD/TRY exchange rate data because google shows the USD/TRY exchange rate when somebody searches “dolar”.Therefore a correlation may exist between these two data sets. Boxplots, which are able to provide the information about how the data distributed, are preferred to visualize the USD/TRY exchange rate to make better analysis.
+
+### Boxplots of USD/TRY Exchange Rate Over Time grouped by years
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data = qdata,aes(x = date, y = usd )) + geom_boxplot(aes(y = usd,group=year, col=year))+labs(title = "Boxplots of USD/TRY vs Time grouped by Years", x = "Time",y = "Exchange Rate") + scale_y_continuous(breaks = seq(from = 0,to = 15,by = 1),minor_breaks = seq(from = 0,to = 15,by = .2)) + scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month")+ theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4))
+
+```
+
+### Google Trends for keyword “dolar”
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=usdTrend)) + geom_line(col="blue") + scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) +labs(title = "Google Trend of dolar over time", x = "Time", y = "Trend" )
+```
+
+In the Google Trends graph trend is low and stable between 2010-2018. After 2018 trends are higher and more fluctuating, the biggest jumps occur when 2018-2019 and 2021-2022. Also, in the USD/TRY graph the boxes are bigger (which means the USD/TRY exchange rate has a high variance or change more frequently ) in 2018-2019 and 2021-2022. Moreover, the low trends in years 2010-2018 corresponds to small boxes (which means USD/TRY exchange rate is more stable or has a low variance) in the exchange rate boxplot graph. After analyzing these graphs, it can be said that people tend to search the exchange rates more often if the exchange rate is unstable. An explanation for this situation may be the fact that people can make financial gains by buying and selling dollars when exchange rate change more frequently. Also the companies that uses both Turkish Lira and US dollars may suffer from financial losses due to the unstability of the exchange rates if they don’t check the exchange rates of the currencies that they used more frequently.
+
+## 2) General CPI Index and Google Trends for keyword “enflasyon”
+
+### CPI Index change over time
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=cpi)) +geom_line(color="blue")+ scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) +labs(title = "CPI vs Time", x = "Time",y = "CPI Index") + scale_y_continuous(breaks = seq(from = 0,to = 800,by = 100))
+```
+
+CPI index is a measure to worth of some specific goods. It is calculated (price of good at year t) / (price of goods in base year). Difference of CPI indexes are used to calculate inflation rate. Since negative inflation is an extremely rare situation, CPI index usually has an increasing trend over time. A smooth growth in CPI over time in Turkey can be seen on the graph. For Google Trends the keyword “enflasyon” is choosed. Since CPI is an indicator for inflation, changes in CPI can affect the searches of “enflasyon”.  
+
+### Boxplots of CPI Index grouped by year
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=cpi)) +geom_boxplot(aes(y = cpi,group=year, col=year))+ scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) +labs(title = "CPI vs Time", x = "Time",y = "CPI Index") + scale_y_continuous(breaks = seq(from = 0,to = 800,by = 100))
+
+```
+
+### Google Trends for keyword “enflasyon”
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=cpiTrend)) +geom_line(color="blue")+ scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) +labs(title = "Google Trends of enflasyon", x = "Time",y = "Trend") + scale_y_continuous(breaks = seq(from = 0,to = 100,by = 10))
+```
+
+The first thing that is catched on eye is the zigzag pattern. The peak points of these zigzags occurs in january because the inflation rates and the raise for minimum wage are announced by the government at the beginning of every year. Second thing is trends in 2010-2017 are following a stable zigzag pattern but after 2017 the amplitude of these zigzags are bigger and increasing over time. In the CPI vs time graph, CPI increases slowly between 2010-2017 (approximately increases 150) and increases very fast between 2017-2022 (approximately 500).  The times of sharp increases in trends (2019 and 2022 january) corresponds the sharp increases in CPI index in 2019 and late 2021-beginning of 2022. In boxplot graph 2019 and 2022 has the biggest two boxplots which means CPI index change very often in these years.. Consequently, the graphs show that when CPI increases faster, trends for keyword “enflasyon” increases and become more fluctuating. A reason for this correlation may be the following. When CPI is stable (increases slower) the market prices doesn’t change much and people don’t care about inlation. However if CPI is not stable (increases faster) market prices increases rapidly and people need to check inflation rate to make economic decisions like comparison of payment raises and increasing the price of the goods to make sure that they can still afford the same amount goods or companies need to check inflation rates more often to forecasts demands and determine the amount of raise in the salaries of its workers.
+
+## 3) Interest Rate and Google Trends for keyword “faiz”
+
+Time Series for interest rates contains more fluctuations than CPI index and USD/TRY time series’ graphs. The main reason is interest rate is used as an economic stabilizer (government can intervene economic unstabilities by changing interest rates) which is further examined in the interest rate and USD/TRY correlation part. 
+
+### Interest Rate Over Time
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=interestRate)) +geom_line(color="blue")+ scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) +labs(title = "Interest Rate vs Time", x = "Time",y = "Interest Rate") + scale_y_continuous(breaks = seq(from = 0,to = 25,by = 5))
+
+
+```
+
+### Boxplots of Interest Rate Grouped by Year
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data = qdata,aes(x = date, y = interestRate )) + geom_boxplot(aes(y = interestRate,group=year, col=year))+labs(title = "Boxplots of Interest Rate vs Time grouped by Years", x = "Time",y = "Exchange Rate") + scale_y_continuous(breaks = seq(from = 0,to = 25,by = 1)) + scale_x_date(date_breaks = "1 year", date_labels = "%Y %b")+ theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4))
+
+```
+
+### Google Trends for Keyword "faiz”
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=qdata,aes(x=date,y=intrateTrend)) +geom_line(color="blue")+ scale_x_date(date_breaks = "1 year", date_labels = "%Y %b", date_minor_breaks = "1 month") + theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4)) +labs(title = "Google trends of faiz", x = "Time",y = "Trend") + scale_y_continuous(breaks = seq(from = 0,to = 100,by = 10))
+
+```
+
+Although the trends data is fluctuating an increasing pattern can be observed from the graph. The highest trends occur in between 2018-2019 and 2019-2020 which are corresponds to biggest boxplots in interest rates boxplot graph.  Between 2010-2017 both trends and interest rate does not change much. However after 2018, with the extreme changes in interest rates (firstly sharp increase from%12.5 to %25 follows with sudden decrease to %5) the trends are peaked. In short, trends tend to increase when interest rates change too much. It also seen that trends are not correlated with the actual value of interest rates because the 2 highest trend occurs when the interest rates has the maximum and the minimum value which is also indicates that trends are correlated with the change of the interest rate.
+
+## 4) USD/TRY Exchange Rate and CPI Index
+
+
+US dollar is a global currency such that the change in the value of USD has global effects like change in the oil prices which has a direct impact on prices of goods. Moreover, in countries like Turkey which imports much, a change in the currency that is used to import (like Euro and USD) has a direct impact on the prices of the goods in that country. Therefore a correlation analysis between USD/TRY exchange rate and CPI index is likely to reasonable. Although USD/TRY graph has little fluctuations the two graphs have almost the same growth behaviour. Without any tests, the correlation still can be easily seen on the graph. Correlation coefficient calculated and pairwise scatter plot created for further analysis.
+
+## CPI Index vs USD/TRY Exchange Rate
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+
+plot(qdata$usd,qdata$cpi, main = "CPI Index vs. USD Exchange Rate",xlab = "USD/TRY Exchange Rate", ylab = "CPI Index",col="blue",sub="Correlation coefficient=0.9897631") # scatter plot
+cor(qdata$usd,qdata$cpi) #correlation coeff
+
+```
+
+The correlation coefficient is extremely close to 1 and the scatter plot almost linear which implies that there is very strong correlation between USD/TRY Exchange Rate and CPI index.
+USD/TRY Exchange Rate and Interest Rate
+In General, when a country’s currency lose its value against a strong currency, governments tends to increase the interest rate to increase the attractiveness of its own currency by increasing the amount of money given to people who keep their money as the country’s own currency in the banks and decrease the exchange rate. Using this relationship a correlation analysis between USD/TRY exchange rate and Interest Rate can be made. USD/TRY graph has an increasing trend over time. Interest Rates also has an increasing trend except the sequence of mid 2018 and late 2020. There is a zig-zag between 2012-2013 but it is small compared to 2018-2020. At the end of 2018 USD/TRY exchange rate increases extremely fast (the slope of the curve between 2018-2019 is the second biggest slope after 2021-2022 which can be easily seen on the graph without further analysis). A sudden increase in interest rate followed this exchange rate increase. However increasing interest rate is not enough to stop the increase of exchange rate and in the mean time Central Bank loses money to pay these high interest. Therefore government suddenly decrease the interest rate and take other precautions to deal with increasing exchange rate to prevent Central Bank from losing money. Nevertheless, this is an extreme situation in economic concept and can be seen as outlier. Increasing interest rates in 2021-2022 again as exchange rate continue to increase also support this idea. Therefore 2 correlation analysis made. One of them includes 2018-2021 and one of them does not contain 2018-2021.
+
+## 5) Interest Rate and USD/TRY Exchange Rate
+
+### Interest Rate vs USD/TRY Exchange Rate
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+
+plot(qdata$usd,qdata$interestRate, main = "Interest Rate vs. USD Exchange Rate",xlab = "USD/TRY Exchange Rate", ylab = "Interest Rate",col="blue")
+cor(qdata$usd,qdata$interestRate) #correlation coeff
+```
+
+At first scatter plot close the linear. Then the extreme conditions in 2018-2021 distorts the linear pattern. However Correlation coefficient is 0.6682093 which means there is still correlation between these 2 data.
+
+### Interest Rate vs USD/TRY Exchange Rate (2018-2021 exclued)
+
+
+```{r echo=FALSE, include=TRUE, warning=FALSE,message=FALSE}
+interest1<-data.frame(interestrate=qdata$interestRate[-c(97:132)],date=qdata$date[-c(97:132)]) # data manipulation
+
+usd1<-data.frame(USDTRY=qdata$usd[-c(97:132)],date=qdata$date[-c(97:132)]) # data manipulation
+
+
+plot(usd1$USDTRY,interest1$interestrate, main = "Interest Rate vs. USD Exchange Rate (2018-2021) Exclueded",xlab = "USD/TRY Exchange Rate", ylab = "Interest Rate",col="blue")
+cor(usd1$USDTRY,interest1$interestrate) # correlation
+```
+
+After removing 2018-2021(make them outliers), correlation coefficient increases significantly and the scatter plot looks more like a line compared the previous graph which shows that exchange rates and interest rate highly correlated if extreme events at 2018-2021 does not considered.
