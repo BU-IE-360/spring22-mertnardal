@@ -1,0 +1,178 @@
+---
+title: "IE360 HW2"
+author: "Mert Nardal"
+date: '2022-05-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading Data Set
+
+Since, the fitted model is wanted to make predictions for quarters in  2007 the data related to 2007 is excluded in train data.
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+library(ggplot2)
+library(forecast)
+library(GGally)
+xdata <- read.csv("C:\\Users\\Lenovo\\Desktop\\IE360\\IE360_Spring22_HW2_data.csv", colClasses=c("character", rep("numeric",10)))
+traindata<-data.frame(quarter=xdata$Quarter[1:28],UGS=xdata$Unleaded.Gasoline.Sale..UGS.[1:28],RNUV=xdata$RNUV[1:28],NLPG=xdata$X..LPG.Vehicles..NLPG.[1:28],PU=xdata$Price.of.Unleaded.Gasoline..PU.[1:28],PG=xdata$Price.of.Diesel.Gasoline..PG.[1:28],NUGV=xdata$X..Unleaded.Gasoline.Vehicles..NUGV.[1:28],NDGV=xdata$X..of.Diesel.Gasoline.Vehicles..NDGV.[1:28],GNPA=xdata$GNP.Agriculture[1:28], GNPC=xdata$GNP.Commerce[1:28], GNP=xdata$GNP.Total[1:28])
+
+```
+
+## Plotting Time Series of UGS
+
+
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+ggplot(data=traindata,aes(x=quarter,y=UGS,group=1))+ geom_point()+ geom_line(color="blue")  + labs(title = "UGS vs Time", x = "Time (Quarters)", y = "UGS" ) +  theme(axis.text.x=element_text(angle=60, hjust=1.4, vjust = 1.4))
+```
+
+It is seen that mean is decreasing over time, so mean is not stationary. However variance seems constant (zig-zags are not getting bigger or smaller) as time passes,so variance is stationary.
+
+## Autocorrelation Analysis
+
+Autocorrelation function for UGS is plotted until lag 14.
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+acf(traindata$UGS)
+```
+
+ACF = 1 at lag=0 because autocorrelation at lag zero means the variance/variance (which is not important for acf analysis since acf at lag=0 always equals 1 unless variance=0). There is high correlation at lag 1 and 4. Correlation for lag 1 indicates that we may use Y(t-1) to predict Y(t) in our model like an auto-regressive model. Correlation at lag 4 indicates that there is a seasonality because correlation in lag 4 means there is a correlation between the same quarters of a year and the next year's (correlation between quarter 2 of 2003 and quarter 2 of 2004). Also, correlation for lag 8 is very close to the boundary which is may be another indicator of seasonality because lag 8 means correlation between the same quarters of year and two years later's. Correlations for other lags are not significant since all of them below the threshold value.
+
+## Fitting a Model Only Based on Time Related Variables (Trend, Seasonality, etc..)
+
+To fit a time series regression model, a trend variable (due to observation of decreasing mean over time) and a seasonal indicator variable (after autocorrelation analysis and examining the plot seasonality can be seen). 
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+traindata2 <- data.frame(traindata, time = c(1:28) , season =rep(c(1:4),7)) #time is trend variable
+head(traindata2)
+```
+
+### 1) Only Trend Model
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+model1 = lm(UGS~time, traindata2)
+summary(model1)
+checkresiduals(model1,lag=9)
+```
+
+After adding trend, residuals' mean become stationary but seasonality can easily seen on the residual plot without any tests. Autocorrelation function also shows that there are strong correlations for lags 2,4,6,8. Also, Breusch-Godfrey  test has a low p-value which means we can reject the null hypothesis (H0 = there is no correlation for all lags). In conclusion adding seasonality is seem to contribute the model.
+
+### 2) Trend+Seasonality Model
+
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+traindata2$season <- as.factor(traindata2$season) #turning season data into factors because this is just an indicator variable
+model2 = lm(UGS~time+season, traindata2)
+summary(model2)
+checkresiduals(model2)
+
+```
+
+After adding seasonality adjusted R-squared increased significantly and p value of the model decreased. All the p values are small which means all of the seasonal variables and the trend variable (time) is significant. The seasonal pattern in the residuals removed and Breusch-Godfrey test p value increased significantly. All the values of in the acf is smaller than the threshold value but correlation at lag 1 and 2 is higher than others. This may lead to adding Y(t-2) or Y(t-1) values to fitted model.
+
+### 3) Trend+Seasonailty+Lag2 Model
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+traindata3 <- data.frame(traindata2,lag2UGS = c(NA,NA,traindata2$UGS[1:26])) # adding lag 2
+head(traindata3)
+tail(traindata3)
+model3 = lm(UGS~time+season+lag2UGS, traindata3)
+summary(model3)
+checkresiduals(model3)
+```
+
+Adjusted R square increased a little bit. For all lags acf values are below the threshold values. Model is improved but trend variable is insignificant now. A further analysis can be made after removing trend (since trend is insignificant now) and may be adding one more lagged  variable.
+
+## Alternative Models (Models that include all kind of predictors)
+Before fitting a new model, a correlation analysis via correlation matrix between predictors can be useful. An ideal predictor should be correlated with UGS and less correlated with other predictors. Since there are a lot of predictors, too many models can be created and choosing better predictors is hard. Since we have not covered partial autocorrelation in lessons (a method that can show pure effect of a predictor to the model by considering a predictor's correlation between other predictors) I generate a model with all variables and made some analysis based on it.
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+traindata4<-data.frame(UGS=xdata$Unleaded.Gasoline.Sale..UGS.[1:28],RNUV=xdata$RNUV[1:28],NLPG=xdata$X..LPG.Vehicles..NLPG.[1:28],PU=xdata$Price.of.Unleaded.Gasoline..PU.[1:28],PG=xdata$Price.of.Diesel.Gasoline..PG.[1:28],NUGV=xdata$X..Unleaded.Gasoline.Vehicles..NUGV.[1:28],NDGV=xdata$X..of.Diesel.Gasoline.Vehicles..NDGV.[1:28],GNPA=xdata$GNP.Agriculture[1:28], GNPC=xdata$GNP.Commerce[1:28], GNP=xdata$GNP.Total[1:28], time =c(1:28), season = rep(c(1:4),7))
+ggpairs(traindata4)
+traindata4$season <- as.factor(traindata4$season)
+#quarters removed since they are in char form, time and seasonal info already included with season and time variables. 
+```
+
+I decided to make improvements on the trend+seasonality model, although the model with the lag is better; after adding other predictors this predictor may be insignificant. To develop an overall opinion I created a model with all predictors.
+
+### Model 1
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE,error=FALSE}
+model4 = lm(UGS~time+season+PG+PU+RNUV+NLPG+NUGV+NDGV+GNPA+GNPC+GNP, traindata4)
+summary(model4)
+checkresiduals(model4,test=FALSE)
+```
+
+
+Although this model has high Adjusted R squared value, the residuals are problematic and there are many insignificant predictors. In the residual plot it is seen that variance is not constant (for quarters 1-13 seems constant then sharp decrease for quarters 15-19 and a sharp increase after quarter 23, even higher than quarters 1-13). Also autocorrelation at lag 1 is beyond the threshold. In conclusion, although this model has high adjusted R squared value, it may not be good for future predictions because it violates assumptions for the residuals for regression (independent and constant variance). So, I decided to remove all predictors that are seemed insignificant by this model(p value >0.11).
+
+
+### Model 2
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+model5 = lm(UGS~time+season+NLPG+NUGV+NDGV+PG+GNPA, traindata4)
+summary(model5)
+checkresiduals(model5)
+```
+
+The new model is not improved, it is similar to the old model. Residuals not improved and autocorrelation plot is similar.Therefore I made bigger changes. I removed time,NLPG and GNPA since they are seemed insignificant by the model and added y(t-1) lag 1 variable as predictor because I observed that autocorrelation at lag 1 still beyond the threshold. Using a lagged (say lag k) predictor can decrease the autocorrelation  at lag k.
+
+
+### Model 3
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+traindata5 <- data.frame(traindata4,lag1UGS = c(NA,traindata4$UGS[1:27]))
+model6 = lm(UGS~season+PG+NUGV+NDGV+lag1UGS, traindata5)
+summary(model6)
+```
+
+Residual plot looks better, Autocorrelation is below thresholds for all lags and R squared value is still high (very close to first model). However I also want to make a model with using time (trend) because time has the highest correlation with UGS.To do this I hold to time predictor in first model and remove all predictors that P value > 0.02
+
+
+### Model 4
+
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+model7 = lm(UGS~season+NUGV+NDGV+time, traindata4)
+summary(model7)
+checkresiduals(model7)
+
+```
+
+This model also looks great. R squared is lower but both residual plot and autocorrelation plot is good enough.
+
+
+
+## Choosing Model
+
+All of the alternative models have higher R-squared than time series models. The best of the alternative models are model3 and model 4 because both of them has good R squared value and don't violate residual assumptions in regression (residuals has constant variance and mean zero). Since model 3 has higher R squared value, I decided to use  model 3 for forecasting.
+
+## Forecasting
+
+
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+
+testdata<-data.frame(quarter=xdata$Quarter,UGS=xdata$Unleaded.Gasoline.Sale..UGS.,RNUV=xdata$RNUV,NLPG=xdata$X..LPG.Vehicles..NLPG.,PU=xdata$Price.of.Unleaded.Gasoline..PU.,PG=xdata$Price.of.Diesel.Gasoline..PG.,NUGV=xdata$X..Unleaded.Gasoline.Vehicles..NUGV.,NDGV=xdata$X..of.Diesel.Gasoline.Vehicles..NDGV.,GNPA=xdata$GNP.Agriculture, GNPC=xdata$GNP.Commerce, GNP=xdata$GNP.Total,time = c(1:32) , season =rep(c(1:4),8), lag1UGS = c(NA,xdata$Unleaded.Gasoline.Sale..UGS.[1:28],NA,NA,NA))
+testdata$season <- as.factor(testdata$season)
+forecast2007= testdata[29:32,c("season","PG","lag1UGS","NUGV","NDGV")]
+pred = c(0,0,0,0)
+for(i in 1:4) {
+  pred[i] = predict(model6,newdata = forecast2007[i,])
+  if(i<4){forecast2007[i+1,"lag1UGS"] = pred[i] }
+}
+
+actual = xdata$Unleaded.Gasoline.Sale..UGS.[29:32]
+
+```
+
+Predictions for 2007:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE,message=FALSE}
+pred
+```
+
