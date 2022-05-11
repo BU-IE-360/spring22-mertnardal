@@ -5,3 +5,8 @@ HW 1 is [here](https://bu-ie-360.github.io/spring22-mertnardal/hw1%20files/IE%20
 
 
 ### Homework II
+HW 2 is [here](https://bu-ie-360.github.io/spring22-mertnardal/hw2/homework2.html) 
+
+### Homework III
+
+Coming soon...
